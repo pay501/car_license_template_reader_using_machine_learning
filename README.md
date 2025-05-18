@@ -1,4 +1,4 @@
-# License plate reader using machine learning
+# License Plate Reader Using Machine Learning
 
 # Project Description
 
