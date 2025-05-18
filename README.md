@@ -1,4 +1,4 @@
-# License_plate_reader_using_machine_learning
+# License plate reader using machine learning
 
 # Project Description
 
