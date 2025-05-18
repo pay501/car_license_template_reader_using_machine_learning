@@ -1,9 +1,11 @@
-transformers==4.51.3
-Pillow==11.2.1
-torch==2.7.0
-opencv-python
+transformers
+Pillow
+torch
+opencv-python-headless
 ultralytics
-imutils==0.5.4
+imutils
 matplotlib
 easyocr
 numpy
+streamlit-webrtc==0.45.0
+streamlit==1.22.0
