@@ -23,7 +23,7 @@ This project is an automated license plate detection and recognition system from
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/pay501/car_license_template_reader_using_machine_learning.git
+   git clone https://github.com/pay501/license_plate_reader_using_machine_learning.git
    
 2. Change directory to project directory:
 
