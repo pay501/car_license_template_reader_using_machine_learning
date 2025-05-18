@@ -1,4 +1,4 @@
-# car_license_template_reader_using_machine_learning
+# License Plate Reader Using Machine Learning
 
 # Project Description
 
@@ -16,9 +16,6 @@ This project is an automated license plate detection and recognition system from
 4. **Optical Character Recognition (OCR)**  
    Using a pretrained TrOCR (Transformer-based OCR) model fine-tuned for Thai characters and digits to read each segmented character from the license plate.
 
-5. **Text Cleaning and Filtering**  
-   Filtering the recognized text to retain only Thai characters and digits, removing duplicates and noise for a clean and accurate license plate string.
-
 ---
 
 ## Installation
@@ -26,19 +23,24 @@ This project is an automated license plate detection and recognition system from
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/pay501/car_license_template_reader_using_machine_learning.git
+   git clone https://github.com/pay501/license_plate_reader_using_machine_learning.git
+   
+2. Change directory to project directory:
 
-2. Install necessary lib:
+   ```bash
+   cd car_license_template_reader_using_machine_learning
+   
+3. Install necessary lib:
 
    ```bash
    pip install -r requiements.txt
 
-3. Change directory to file to  run:
+4. Change directory to file to  run:
 
    ```bash
    cd prediction
 
-4. run script:
+5. run script:
 
    ```bash
    python video.py
