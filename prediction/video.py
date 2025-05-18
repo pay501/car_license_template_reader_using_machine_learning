@@ -7,6 +7,7 @@ from itertools import groupby
 from ultralytics import YOLO
 import os
 import numpy as np
+import valid_and_log
 
 # Load model and processor
 processor = TrOCRProcessor.from_pretrained("spykittichai/th-character-ocr")
@@ -43,19 +44,24 @@ def check_img(img):
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         ret, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU | cv2.THRESH_BINARY_INV)
-
+        
         kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
         dilation = cv2.dilate(thresh, kernel, iterations=1)  # ใช้ edges แทน thresh
-
         erosion = cv2.erode(dilation, kernel, iterations=1)
 
         contours, hierarchy = cv2.findContours(erosion, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         cropped_images = []
-
+        display_img = thresh.copy()
+        
         for cnt in contours:
             x, y, w, h = cv2.boundingRect(cnt)
-            cropped = erosion[y:y+h, x:x+w]  # Crop ภาพ
+            cropped = erosion[y:y+h, x:x+w]
+            """ cv2.rectangle(display_img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+            cropped_images.append((x, y, cropped))
+            cv2.imshow("Contours with Bounding Boxes", display_img)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows() """
             """ height, width = cropped.shape
             print(height, width)
             cv2.imshow("Cropped Contour", cropped)
@@ -120,8 +126,12 @@ def check_img(img):
             cleaned = clean_and_filter(result)
             if cleaned:
                 word.append(cleaned)
+        license_plate = "".join(word)
+        status = valid_and_log.check_access(license_plate)
+        valid_and_log.log_entry(license_plate, status)
         print(80 * "-")
-        print("License plate:", "".join(word))
+        print("License plate:", license_plate)
+        print("status:", status)
         print(80 * "-")
         
 def detect_and_crop_license_plates(image, model_path='../detection/model/best.pt'):
@@ -213,9 +223,8 @@ def process_video_and_crop(detection_model, video_path, output_crop_dir):
 
 if __name__ == "__main__":
     detection_model_path = "../detection/model/best.pt"
-    video_path = "./video/KhoLo1106.mp4"
-    video_list = os.listdir("./video")
-    dir_path = "./video/"
+    video_list = os.listdir("./video/invalid")
+    dir_path = "./video/invalid/"
     
     try:
         detection_model = YOLO(detection_model_path)
@@ -225,7 +234,7 @@ if __name__ == "__main__":
         exit()
 
     for video in video_list:
-        full_video_path = dir_path + video 
+        full_video_path = dir_path + video
         
         first_crop_images = process_video_and_crop(detection_model, full_video_path, None)
         
@@ -234,7 +243,7 @@ if __name__ == "__main__":
         for crop_img in first_crop_images:
             second_crop = detect_and_crop_license_plates(crop_img, detection_model_path)
             final_cropped_images.extend(second_crop)
-
+        
         if final_cropped_images:
             for idx, img in enumerate(final_cropped_images):
                 idx = idx + 1
