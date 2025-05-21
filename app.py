@@ -386,9 +386,12 @@ def use_uploaded_image(
     status_indicator, 
     image_placeholder, 
     result_placeholder
-    ):
+):
     try:
-        file_bytes = np.asarray(image_bytes, dtype=np.uint8)
+        # Convert bytes to numpy array
+        file_bytes = np.frombuffer(image_bytes, np.uint8)
+        
+        # Decode image
         image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         
         if image is None:
@@ -448,8 +451,10 @@ def use_uploaded_image(
             else:
                 result_placeholder.error("No license plate detected in the image.")
                 status_indicator.error("No license plate detected.")
+                
     except Exception as e:
-        status_indicator.error(f"Error processing image: {e}")
+        status_indicator.error(f"Error processing image: {str(e)}")
+        st.error(f"Detailed error: {str(e)}")
 
 def main():
     st.title("🚗 Thai License Plate Recognition")
