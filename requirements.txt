@@ -9,3 +9,4 @@ easyocr
 numpy
 streamlit-webrtc==0.45.0
 streamlit==1.22.0
+supabase

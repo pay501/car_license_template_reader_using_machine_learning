@@ -17,6 +17,7 @@ import base64
 import io
 from datetime import datetime
 import pytz
+from supabase import create_client, Client
 
 # Page configuration
 st.set_page_config(
@@ -40,8 +41,10 @@ if "detections_saved" not in st.session_state:
     st.session_state.detections_saved = set()
 
 # Supabase integration
-SUPABASE_URL = "https://nyfaluazyaribgfqryxy.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55ZmFsdWF6eWFyaWJnZnFyeXh5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0NzA0NzQ1MCwiZXhwIjoyMDYyNjIzNDUwfQ.rbytQ-q5a8cN-A-LakAmtywl2VqXn-CiTeJXkhKJeIk"
+SUPABASE_URL = "https://jydnuuqtaknpvbbtlpbb.supabase.co"
+SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp5ZG51dXF0YWtucHZiYnRscGJiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM1ODE5ODgsImV4cCI6MjA1OTE1Nzk4OH0.YQAraCWY7BScFIE5jcdJzbkZauApce3Yi_E_GlSrhLQ"
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def is_valid_license_plate(text):
     """
@@ -64,9 +67,6 @@ def is_valid_license_plate(text):
     return has_thai and has_four_numbers
 
 def insert_data_to_supabase(plate, city=None, image_data=None):
-    """
-    Save license plate data and captured image to Supabase database
-    """
     if not plate:
         return False
     
@@ -74,13 +74,6 @@ def insert_data_to_supabase(plate, city=None, image_data=None):
     if not is_valid_license_plate(plate):
         st.warning(f"'{plate}' does not appear to be a valid license plate (needs Thai characters and 4-5 numbers). Not saving to database.")
         return False
-        
-    url = f"{SUPABASE_URL}/rest/v1/car"
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {SUPABASE_KEY}"
-    }
 
     # Ensure we have a city value or use default
     if not city:
@@ -115,9 +108,25 @@ def insert_data_to_supabase(plate, city=None, image_data=None):
             st.warning(f"Could not process image for database storage: {img_error}")
 
     try:
-        response = requests.post(url, headers=headers, json=data)
-        response.raise_for_status()
-        return True
+        response = supabase.table("car_still").select("*").eq("plate_number", plate).execute()
+        status_indicator = st.empty()
+        if not response.data:  
+            data["status"] = "in"
+            supabase.table("car_all").insert(data).execute() 
+            supabase.table("car_still").insert(data).execute()  
+            status_indicator.success(f"Car {plate} entered.")
+            return True
+            
+        elif response.data[0]["status"] == "in":
+            data["status"] = "out"
+            supabase.table("car_all").insert(data).execute()
+            supabase.table("car_still").delete().eq("plate_number", plate).execute()
+            status_indicator.success(f"Car {plate} existed")
+            return True
+            
+        else:
+            print(f"Car {plate} has unknown status.")
+            return False
     except Exception as e:
         st.error(f"Error saving to database: {e}")
         return False
@@ -368,10 +377,17 @@ def check_webcam_available():
     
     return available_cameras
 
-def use_uploaded_image(image_bytes, detection_model, processor, model, device, status_indicator, image_placeholder, result_placeholder):
-    """Process an uploaded image."""
+def use_uploaded_image(
+    image_bytes, 
+    detection_model, 
+    processor, 
+    model, 
+    device, 
+    status_indicator, 
+    image_placeholder, 
+    result_placeholder
+    ):
     try:
-        # Convert to numpy array
         file_bytes = np.asarray(image_bytes, dtype=np.uint8)
         image = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         
@@ -733,7 +749,7 @@ def main():
                         annotated_frame, license_text, plate_found = process_frame(
                             frame, detection_model, processor, model, device
                         )
-                        
+                        status_indicator.success("License plate: ", license_text)
                         if license_text:
                             # Check if it's a new detection or same as previous
                             if not all_detections or all_detections[-1][1] != license_text:
